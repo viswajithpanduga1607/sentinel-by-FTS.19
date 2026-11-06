@@ -175,3 +175,7 @@ All four members took part in planning, building and testing. The build was done
 ## Use of AI coding assistants
 
 This project uses AI coding assistants (Claude Code) during development. Project rules for the assistant are in [CLAUDE.md](CLAUDE.md).
+
+## License
+
+Sentinel is released under the MIT license. See [LICENSE](LICENSE).

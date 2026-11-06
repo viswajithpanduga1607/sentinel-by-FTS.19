@@ -2,6 +2,7 @@
   "name": "sentinel",
   "version": "0.1.0",
   "description": "Pre-install supply-chain gate for npm packages",
+  "license": "MIT",
   "bin": {
     "sentinel": "src/cli.js"
   },
