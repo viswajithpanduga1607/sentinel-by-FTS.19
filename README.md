@@ -82,6 +82,29 @@ To limit false positives, popular names of 3–5 characters only match at one ed
 
 Optional metadata raises the score, capped at 100: a publisher account under 7 days old adds 20 (under 30 days adds 10), and fewer than 100 weekly downloads adds 20 (fewer than 1,000 adds 10).
 
+## Install-script scanning
+
+`scanPackage(packageDir)` in `src/scriptRisk.js` reads a package's `preinstall`, `install` and `postinstall` scripts and returns `{ package, risk, findings }`, where each finding has a `rule`, `severity`, `file`, `line` and a plain-language `explanation`. Everything is static: script strings are pattern-matched, and files run with `node <file>` are read as text and parsed with acorn. Nothing is executed, required or installed.
+
+| Rule | Looks for | Severity |
+| --- | --- | --- |
+| `credential-exfiltration` | Sensitive environment access (medium or high `env-access`) **and** a network call in the same package | critical |
+| `curl-pipe-shell` | `curl` or `wget` piped into a shell | high |
+| `powershell-download` | PowerShell download cradles (`DownloadString`, `Invoke-WebRequest`, `IEX`, `-EncodedCommand`) | high |
+| `network` | `http`, `https`, `net`, `dns`, `tls`, `request`, `axios` and similar modules, `fetch()`, `XMLHttpRequest`, `WebSocket` | high |
+| `sensitive-file` | Paths to `~/.ssh`, `.npmrc`, `~/.aws`, `.netrc`, `.git-credentials` or credential files | high |
+| `eval` | `eval()`, `Function()` / `new Function()` (high); loading `vm` (medium) | high / medium |
+| `env-access` | Reading the whole `process.env` (high); variables whose names look like secrets, such as `NPM_TOKEN`, `*_SECRET`, `AWS_*`, `GITHUB_*`, or computed names (medium); any other single variable (low) | high / medium / low |
+| `child-process` | Loading `child_process` (exec/spawn) | medium |
+| `obfuscation` | Long base64 or hex strings, `\x` escape runs, `String.fromCharCode` chains, runtime base64 decoding | medium |
+| `base64-decode` | `base64 -d` in a script string | medium |
+| `parse-error` | A script file acorn cannot parse | medium |
+| `outside-package` / `missing-script-file` | A script runs a file outside the package or one that is missing | medium / low |
+
+Reading an ordinary variable such as `HTTPS_PROXY` before a download does not trigger `credential-exfiltration`, so legitimate packages that fetch prebuilt binaries during install are not treated as stealing credentials.
+
+The package risk is the score of its most severe finding (critical 90, high 60, medium 35, low 10), plus 5 for each additional distinct rule, capped at 100. A package with no findings scores 0.
+
 ## Requirements
 
 - Node.js 20 or newer
