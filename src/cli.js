@@ -10,6 +10,7 @@ const { checkName } = require('./nameRisk');
 const { scanPackage } = require('./scriptRisk');
 const { scoreDependency } = require('./scorer');
 const { formatTable, formatSummary } = require('./report');
+const { colorEnabled, createColors } = require('./colors');
 
 // Accepts a project folder or a path to a package.json file.
 function resolveManifest(target) {
@@ -52,7 +53,8 @@ function scanLocal(dir) {
   }
 }
 
-function check(target) {
+function check(target, options) {
+  const c = createColors(options.color !== false && colorEnabled());
   const manifestPath = resolveManifest(target);
   let deps;
   try {
@@ -72,9 +74,9 @@ function check(target) {
   const results = deps.map(({ name, spec }) =>
     scoreDependency(checkName(name), scanLocal(localPackageDir(projectDir, name, spec))),
   );
-  console.log(formatTable(results));
+  console.log(formatTable(results, c));
   console.log('');
-  console.log(formatSummary(results));
+  console.log(formatSummary(results, c));
   process.exitCode = results.some((r) => r.verdict === 'BLOCK') ? 1 : 0;
 }
 
@@ -89,6 +91,7 @@ program
   .command('check')
   .description('check dependencies for look-alike names and risky install scripts')
   .argument('<path>', 'project folder or path to a package.json file')
+  .option('--no-color', 'disable coloured output (also off when NO_COLOR is set or output is not a terminal)')
   .action(check);
 
 program.parse(process.argv);
