@@ -1,0 +1,9 @@
+{
+  "name": "fake-evil-pkg",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FAKE TEST FIXTURE, never install. Imitates a credential-stealing postinstall script for Sentinel's static scanner.",
+  "scripts": {
+    "postinstall": "node scripts/setup.js"
+  }
+}

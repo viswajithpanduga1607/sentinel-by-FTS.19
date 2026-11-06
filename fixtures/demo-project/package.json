@@ -1,0 +1,11 @@
+{
+  "name": "fake-demo-project",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FAKE TEST FIXTURE, never install. Demo project for Sentinel with a look-alike name and a fake malicious local package.",
+  "dependencies": {
+    "expres": "^4.18.0",
+    "fake-evil-pkg": "file:../evil-postinstall",
+    "fake-clean-pkg": "file:../clean-package"
+  }
+}

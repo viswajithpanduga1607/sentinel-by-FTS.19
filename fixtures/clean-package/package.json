@@ -1,0 +1,9 @@
+{
+  "name": "fake-clean-pkg",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FAKE TEST FIXTURE, never install. Harmless postinstall that only prints a message.",
+  "scripts": {
+    "postinstall": "node scripts/message.js"
+  }
+}
