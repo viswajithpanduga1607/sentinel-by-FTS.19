@@ -11,7 +11,7 @@ It targets two threats:
 - **Look-alike package names (typosquatting).** Packages whose names imitate popular ones, such as `expres` or `lodahs`, to catch a typo or a careless copy-paste.
 - **Malicious install scripts.** `preinstall`, `install` and `postinstall` scripts that run automatically during install and can download payloads, read secrets or open network connections.
 
-> **Status:** look-alike name detection works via `sentinel check`. Install-script analysis is not implemented yet.
+> **Status:** `sentinel check` detects look-alike names and statically scans the install scripts of local packages, and gives each dependency a BLOCK, WARN or OK verdict.
 
 ## Usage
 
@@ -19,33 +19,59 @@ It targets two threats:
 node src/cli.js check <path>
 ```
 
-`<path>` is a project folder or a path to a `package.json` file. Sentinel reads `dependencies` and `devDependencies` as plain JSON (nothing is installed or run), scores each name for look-alike risk, and prints a table sorted by risk.
+`<path>` is a project folder or a path to a `package.json` file. For every entry in `dependencies` and `devDependencies`, Sentinel:
 
-Example, using the fake look-alike fixture:
+1. Scores the name for look-alike risk (see [Name-risk scoring](#name-risk-scoring)).
+2. If the dependency resolves to a local folder, scans that package's install scripts (see [Install-script scanning](#install-script-scanning)). A local folder is a `file:` path, resolved relative to the project, or an existing `node_modules/<name>`. Registry packages that are not in `node_modules` get the name check only.
+3. Combines the two into a final score and verdict.
+
+Everything is read as plain text. Nothing is installed, required or executed.
+
+### Verdicts
+
+The final score is the higher of the name risk and the script risk, plus 10 when both checks find something, capped at 100. A local package that cannot be scanned (for example a `file:` path that does not exist) scores at least 40, because Sentinel cannot vouch for it.
+
+| Verdict | Final score |
+| --- | --- |
+| BLOCK | 70 or above |
+| WARN | 40–69 |
+| OK | Below 40 |
+
+The explanation column lists every finding from both checks, with the file and line for script findings.
+
+### Example
+
+Using the fake demo fixture, which depends on the look-alike `expres`, the fake malicious local package `fake-evil-pkg` and the harmless `fake-clean-pkg`:
 
 ```
-$ node src/cli.js check fixtures/lookalike-project
-Package   Risk  Likely intended  Reason
---------  ----  ---------------  ------
-axois     75    axios            Looks like "axios" with two adjacent letters swapped ("io" became "oi").
-eslnit    75    eslint           Looks like "eslint" with two adjacent letters swapped ("in" became "ni").
-jset      75    jest             Looks like "jest" with two adjacent letters swapped ("es" became "se").
-lodahs    75    lodash           Looks like "lodash" with two adjacent letters swapped ("sh" became "hs").
-expres    70    express          Looks like "express" with a missing "s".
-crossenv  65    cross-env        Same as "cross-env" apart from separators (-, _ or .).
+$ node src/cli.js check fixtures/demo-project
+Package         Verdict  Risk  Likely intended  Explanation
+--------------  -------  ----  ---------------  -----------
+fake-evil-pkg   BLOCK    100   -                Name: No look-alike found.
+                                                Scripts: [critical] scripts/setup.js:13 Possible credential exfiltration: reads sensitive environment variables (scripts/setup.js:15) and makes network calls (scripts/setup.js:13) during install.
+                                                Scripts: [high] scripts/setup.js:19 Refers to SSH keys (~/.ssh) (".ssh").
+                                                Scripts: [high] scripts/setup.js:15 Reads the whole process.env object, which often holds tokens, passwords and API keys.
+                                                Scripts: [high] scripts/setup.js:13 Loads the network module "https", so it can send or receive data over the internet.
 
-6 dependencies checked, 5 at or above risk 70.
+expres          BLOCK    70    express          Name: Looks like "express" with a missing "s".
+
+fake-clean-pkg  OK       0     -                Name: No look-alike found.
+                                                Scripts: Install scripts scanned, nothing found.
+
+3 dependencies checked: 2 BLOCK, 0 WARN, 1 OK.
 ```
 
-Exit codes, so `check` can gate a CI job or a pre-install hook:
+### Exit codes
+
+So that `check` can gate a CI job or a pre-install hook:
 
 | Code | Meaning |
 | --- | --- |
-| 0 | No dependency scored 70 or above |
-| 1 | At least one dependency scored 70 or above |
+| 0 | No dependency got a BLOCK verdict |
+| 1 | At least one dependency got a BLOCK verdict |
 | 2 | The `package.json` could not be read or parsed |
 
-## Planned architecture
+## Architecture
 
 ```
 src/
