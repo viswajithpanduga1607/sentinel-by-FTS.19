@@ -11,7 +11,39 @@ It targets two threats:
 - **Look-alike package names (typosquatting).** Packages whose names imitate popular ones, such as `expres` or `lodahs`, to catch a typo or a careless copy-paste.
 - **Malicious install scripts.** `preinstall`, `install` and `postinstall` scripts that run automatically during install and can download payloads, read secrets or open network connections.
 
-> **Status:** early skeleton. The CLI runs and shows help, but no detection logic is implemented yet.
+> **Status:** look-alike name detection works via `sentinel check`. Install-script analysis is not implemented yet.
+
+## Usage
+
+```sh
+node src/cli.js check <path>
+```
+
+`<path>` is a project folder or a path to a `package.json` file. Sentinel reads `dependencies` and `devDependencies` as plain JSON (nothing is installed or run), scores each name for look-alike risk, and prints a table sorted by risk.
+
+Example, using the fake look-alike fixture:
+
+```
+$ node src/cli.js check fixtures/lookalike-project
+Package   Risk  Likely intended  Reason
+--------  ----  ---------------  ------
+axois     75    axios            Looks like "axios" with two adjacent letters swapped ("io" became "oi").
+eslnit    75    eslint           Looks like "eslint" with two adjacent letters swapped ("in" became "ni").
+jset      75    jest             Looks like "jest" with two adjacent letters swapped ("es" became "se").
+lodahs    75    lodash           Looks like "lodash" with two adjacent letters swapped ("sh" became "hs").
+expres    70    express          Looks like "express" with a missing "s".
+crossenv  65    cross-env        Same as "cross-env" apart from separators (-, _ or .).
+
+6 dependencies checked, 5 at or above risk 70.
+```
+
+Exit codes, so `check` can gate a CI job or a pre-install hook:
+
+| Code | Meaning |
+| --- | --- |
+| 0 | No dependency scored 70 or above |
+| 1 | At least one dependency scored 70 or above |
+| 2 | The `package.json` could not be read or parsed |
 
 ## Planned architecture
 
