@@ -50,7 +50,14 @@ Runtime dependencies are limited to [commander](https://www.npmjs.com/package/co
 
 ## Team and contributions
 
-Sentinel is built by team **FTS.19**. The build was done on one shared laptop, so commit authorship does not reflect who contributed what; all team members worked on the project together.
+Sentinel is built by team **FTS.19**:
+
+- Charan Teja
+- Dhanesh Guptha
+- Vamshi Krishna
+- Viswajith Reddy
+
+All four members took part in planning, building and testing. The build was done on one shared laptop, so commit authorship does not reflect who contributed what.
 
 ## Use of AI coding assistants
 
