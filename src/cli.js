@@ -11,6 +11,7 @@ const { scanPackage } = require('./scriptRisk');
 const { scoreDependency } = require('./scorer');
 const { formatTable, formatSummary } = require('./report');
 const { colorEnabled, createColors } = require('./colors');
+const { renderBanner } = require('./banner');
 
 // Accepts a project folder or a path to a package.json file.
 function resolveManifest(target) {
@@ -55,6 +56,7 @@ function scanLocal(dir) {
 
 function check(target, options) {
   const c = createColors(options.color !== false && colorEnabled());
+  if (c.enabled) console.log(renderBanner(c));
   const manifestPath = resolveManifest(target);
   let deps;
   try {
