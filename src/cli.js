@@ -7,10 +7,9 @@ const path = require('node:path');
 const { Command } = require('commander');
 const pkg = require('../package.json');
 const { checkName } = require('./nameRisk');
+const { scanPackage } = require('./scriptRisk');
+const { scoreDependency } = require('./scorer');
 const { formatTable, formatSummary } = require('./report');
-
-// Any dependency at or above this risk makes `check` exit with code 1.
-const HIGH_RISK = 70;
 
 // Accepts a project folder or a path to a package.json file.
 function resolveManifest(target) {
@@ -20,39 +19,63 @@ function resolveManifest(target) {
 }
 
 // Reads the manifest as plain JSON. Nothing is installed or executed.
-function readDependencyNames(manifestPath) {
+function readDependencies(manifestPath) {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  const names = new Set();
+  const deps = new Map();
   for (const field of ['dependencies', 'devDependencies']) {
-    const deps = manifest[field];
-    if (deps && typeof deps === 'object') {
-      Object.keys(deps).forEach((name) => names.add(name));
+    const entries = manifest[field];
+    if (entries && typeof entries === 'object') {
+      for (const [name, spec] of Object.entries(entries)) {
+        if (!deps.has(name)) deps.set(name, spec);
+      }
     }
   }
-  return [...names];
+  return [...deps].map(([name, spec]) => ({ name, spec }));
+}
+
+// Local folder for a dependency: a "file:" path, or an existing
+// node_modules/<name>. Returns null when there is nothing local to scan.
+function localPackageDir(projectDir, name, spec) {
+  if (typeof spec === 'string' && spec.startsWith('file:')) {
+    return path.resolve(projectDir, spec.slice('file:'.length));
+  }
+  const installed = path.join(projectDir, 'node_modules', ...name.split('/'));
+  return fs.existsSync(path.join(installed, 'package.json')) ? installed : null;
+}
+
+function scanLocal(dir) {
+  if (!dir) return null;
+  try {
+    return scanPackage(dir);
+  } catch (err) {
+    return { risk: 0, findings: [], error: err.message };
+  }
 }
 
 function check(target) {
   const manifestPath = resolveManifest(target);
-  let names;
+  let deps;
   try {
-    names = readDependencyNames(manifestPath);
+    deps = readDependencies(manifestPath);
   } catch (err) {
     console.error(`Could not read ${manifestPath}: ${err.message}`);
     process.exitCode = 2;
     return;
   }
 
-  if (names.length === 0) {
+  if (deps.length === 0) {
     console.log(`No dependencies found in ${manifestPath}.`);
     return;
   }
 
-  const results = names.map((name) => checkName(name));
+  const projectDir = path.dirname(manifestPath);
+  const results = deps.map(({ name, spec }) =>
+    scoreDependency(checkName(name), scanLocal(localPackageDir(projectDir, name, spec))),
+  );
   console.log(formatTable(results));
   console.log('');
-  console.log(formatSummary(results, HIGH_RISK));
-  process.exitCode = results.some((r) => r.risk >= HIGH_RISK) ? 1 : 0;
+  console.log(formatSummary(results));
+  process.exitCode = results.some((r) => r.verdict === 'BLOCK') ? 1 : 0;
 }
 
 const program = new Command();
@@ -64,7 +87,7 @@ program
 
 program
   .command('check')
-  .description('check dependencies in a package.json for look-alike package names')
+  .description('check dependencies for look-alike names and risky install scripts')
   .argument('<path>', 'project folder or path to a package.json file')
   .action(check);
 
