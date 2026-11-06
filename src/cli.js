@@ -9,7 +9,7 @@ const pkg = require('../package.json');
 const { checkName } = require('./nameRisk');
 const { scanPackage } = require('./scriptRisk');
 const { scoreDependency } = require('./scorer');
-const { formatTable, formatSummary } = require('./report');
+const { formatTable, formatSummary, formatFancy } = require('./report');
 const { colorEnabled, createColors } = require('./colors');
 const { renderBanner } = require('./banner');
 
@@ -55,8 +55,9 @@ function scanLocal(dir) {
 }
 
 function check(target, options) {
+  const started = Date.now();
   const c = createColors(options.color !== false && colorEnabled());
-  if (c.enabled) console.log(renderBanner(c));
+  if (c.enabled) console.log(renderBanner(c, { version: pkg.version }));
   const manifestPath = resolveManifest(target);
   let deps;
   try {
@@ -73,12 +74,21 @@ function check(target, options) {
   }
 
   const projectDir = path.dirname(manifestPath);
-  const results = deps.map(({ name, spec }) =>
-    scoreDependency(checkName(name), scanLocal(localPackageDir(projectDir, name, spec))),
-  );
-  console.log(formatTable(results, c));
-  console.log('');
-  console.log(formatSummary(results, c));
+  let scanned = 0;
+  const results = deps.map(({ name, spec }) => {
+    const localDir = localPackageDir(projectDir, name, spec);
+    if (localDir) scanned++;
+    return scoreDependency(checkName(name), scanLocal(localDir));
+  });
+
+  if (c.enabled) {
+    const shownTarget = path.relative(process.cwd(), manifestPath) || manifestPath;
+    console.log(formatFancy(results, c, { target: shownTarget.split(path.sep).join('/'), scanned, elapsedMs: Date.now() - started }));
+  } else {
+    console.log(formatTable(results, c));
+    console.log('');
+    console.log(formatSummary(results, c));
+  }
   process.exitCode = results.some((r) => r.verdict === 'BLOCK') ? 1 : 0;
 }
 
