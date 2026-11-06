@@ -71,6 +71,15 @@ So that `check` can gate a CI job or a pre-install hook:
 | 1 | At least one dependency got a BLOCK verdict |
 | 2 | The `package.json` could not be read or parsed |
 
+### Colour output
+
+In a terminal, `check` shows a SENTINEL banner and colours the verdicts (BLOCK red, WARN yellow, OK green), package names and severity tags. Colour and the banner are turned off automatically when output is not a terminal (for example when piped to a file or in CI), and you can turn them off yourself with either:
+
+- the `--no-color` flag: `node src/cli.js check <path> --no-color`
+- the `NO_COLOR` environment variable set to any non-empty value (see [no-color.org](https://no-color.org))
+
+Plain output is identical to the example above.
+
 ## Architecture
 
 ```
