@@ -28,6 +28,10 @@ Flow: `cli` → `nameRisk` + `scriptRisk` → `scorer` → `report`.
 
 Runtime dependencies are limited to [commander](https://www.npmjs.com/package/commander) and [acorn](https://www.npmjs.com/package/acorn).
 
+## Data
+
+`data/popular-npm.json` is the list of popular package names that look-alike names are compared against. It is a hand-curated seed list of widely used npm packages, compiled with Claude Code from general knowledge rather than pulled from registry download statistics, and is meant to be expanded.
+
 ## Requirements
 
 - Node.js 20 or newer
