@@ -73,12 +73,12 @@ So that `check` can gate a CI job or a pre-install hook:
 
 ### Colour output
 
-In a terminal, `check` shows a SENTINEL banner and colours the verdicts (BLOCK red, WARN yellow, OK green), package names and severity tags. Colour and the banner are turned off automatically when output is not a terminal (for example when piped to a file or in CI), and you can turn them off yourself with either:
+In a terminal, `check` switches to a colour layout: a SENTINEL banner (with a green-cyan-purple gradient in terminals that support 24-bit colour, such as Windows Terminal, VS Code and iTerm2), a short scan header, and one card per dependency with a coloured verdict badge, a 10-block risk meter and a tree of findings tagged `CRIT`, `HIGH`, `MED`, `LOW`, `NAME` or `SCAN`. A footer gives the counts, the scan time and an overall verdict ("don't install yet", "proceed with caution" or "all clear. ship it."). Colour and the banner are turned off automatically when output is not a terminal (for example when piped to a file or in CI), and you can turn them off yourself with either:
 
 - the `--no-color` flag: `node src/cli.js check <path> --no-color`
 - the `NO_COLOR` environment variable set to any non-empty value (see [no-color.org](https://no-color.org))
 
-Plain output is identical to the example above.
+Plain output is always the table shown in the example above, so scripts and CI logs are unaffected.
 
 ## Architecture
 
