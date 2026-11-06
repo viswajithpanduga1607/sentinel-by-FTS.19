@@ -32,6 +32,24 @@ Runtime dependencies are limited to [commander](https://www.npmjs.com/package/co
 
 `data/popular-npm.json` is the list of popular package names that look-alike names are compared against. It is a hand-curated seed list of widely used npm packages, compiled with Claude Code from general knowledge rather than pulled from registry download statistics, and is meant to be expanded.
 
+## Name-risk scoring
+
+`checkName(name, popularList, metadata)` in `src/nameRisk.js` scores a package name from 0 to 100 and reports the popular package it most likely imitates, with a plain-language reason. An exact match with a popular package scores 0. Otherwise the closest match decides the base score:
+
+| Finding | Example | Score |
+| --- | --- | --- |
+| Two adjacent letters swapped | `axois` → `axios` | 75 |
+| Keyboard-adjacent typo | `reacr` → `react` | 70 |
+| Missing letter | `expres` → `express` | 70 |
+| Doubled letter | `lodassh` → `lodash` | 70 |
+| Separator change (`-`, `_`, `.` or none) | `crossenv` → `cross-env` | 65 |
+| Other single-letter change or extra letter | `chaik` → `chalk` | 55 |
+| Two edits away (Damerau-Levenshtein) | `reqeusts` → `request` | 40 |
+
+To limit false positives, popular names of 3–5 characters only match at one edit, and names of 1–2 characters (such as `ms` or `qs`) only get the separator rule.
+
+Optional metadata raises the score, capped at 100: a publisher account under 7 days old adds 20 (under 30 days adds 10), and fewer than 100 weekly downloads adds 20 (fewer than 1,000 adds 10).
+
 ## Requirements
 
 - Node.js 20 or newer
