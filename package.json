@@ -6,7 +6,7 @@
     "sentinel": "src/cli.js"
   },
   "scripts": {
-    "test": "node -e \"console.log('No tests yet')\""
+    "test": "node --test"
   },
   "engines": {
     "node": ">=20"

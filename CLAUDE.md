@@ -7,6 +7,8 @@ Project rules for Claude Code working on **Sentinel** (team FTS.19), a CLI that 
 - Static analysis only. Never run, install or execute any script from test fixtures.
 - Never run `npm install` (or any package manager command) on fixtures.
 - Fixtures are fake and clearly marked; they must contain no real secrets and no real malware.
+- Fixtures live in the top-level `fixtures/` folder, never under `test/`, so `node --test` cannot pick them up and run them.
+- Never give a fixture file or folder a name the test runner matches: no `*.test.js`, `*-test.js`, `*_test.js`, `test-*.js`, `test.js` (or the `.cjs`/`.mjs` equivalents), and no folder named `test`.
 
 ## Stack
 

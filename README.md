@@ -70,6 +70,16 @@ Optional metadata raises the score, capped at 100: a publisher account under 7 d
    node src/cli.js --help
    ```
 
+## Running tests
+
+```sh
+npm test
+```
+
+Tests use Node's built-in test runner (`node --test`), so no extra dependencies are needed.
+
+Fixtures live in the top-level `fixtures/` folder. They are fake projects that Sentinel only reads as plain files; never install or run anything inside them. They are kept outside `test/` because `node --test` runs every `.js` file it finds under a `test/` folder, and fixture files are never given names the test runner picks up (such as `*.test.js`, `*-test.js` or `test-*.js`).
+
 ## Team and contributions
 
 Sentinel is built by team **FTS.19**:

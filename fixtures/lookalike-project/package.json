@@ -1,0 +1,16 @@
+{
+  "name": "fake-lookalike-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "description": "FAKE TEST FIXTURE for Sentinel. Never install. Dependency names are deliberate look-alikes of popular packages.",
+  "dependencies": {
+    "expres": "^4.18.0",
+    "lodahs": "^4.17.0",
+    "axois": "^1.6.0",
+    "crossenv": "^7.0.0"
+  },
+  "devDependencies": {
+    "jset": "^29.0.0",
+    "eslnit": "^8.0.0"
+  }
+}
